@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_HOST")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  fullName     String
+  email        String
+  passwordHash String
+  avatar       String
+  isActive     Boolean
+  lastAccess   DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdEvents Event[]         @relation("CreatedEvents")
+  EventAttendee EventAttendee[]
+
+  @@index([email]) // Index for email searches
+}
+
+model Event {
+  id              String          @id @default(cuid())
+  title           String
+  description     String
+  location        String
+  capacity        Int
+  needApproval    Boolean
+  status          EventStatus
+  thumbnail       String
+  metadata        String?
+  openRegisterAt  DateTime
+  closeRegisterAt DateTime
+  startAt         DateTime
+  endAt           DateTime
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  createdBy       String
+  createdUser     User            @relation("CreatedEvents", fields: [createdBy], references: [id])
+  EventAttendee   EventAttendee[]
+  EventCategory   EventCategory[]
+
+  @@index([title])
+  @@index([status, startAt])
+  @@index([startAt, endAt])
+  @@index([status, closeRegisterAt])
+}
+
+model EventAttendee {
+  id        String         @id @default(cuid())
+  userId    String
+  eventId   String
+  role      String
+  status    AttendeeStatus
+  checkInAt DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  user      User           @relation(fields: [userId], references: [id])
+  event     Event          @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+  @@index([eventId, status])
+}
+
+model Category {
+  id            String          @id @default(cuid())
+  name          String
+  metadata      String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  EventCategory EventCategory[]
+
+  @@index([name])
+}
+
+model EventCategory {
+  eventId    String
+  categoryId String
+  event      Event    @relation(fields: [eventId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([eventId, categoryId])
+  @@index([eventId])
+}
+
+enum EventStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  COMPLETED
+}
+
+enum AttendeeStatus {
+  PENDING
+  CONFIRMED
+  WAITLIST
+  CANCELLED
+}
