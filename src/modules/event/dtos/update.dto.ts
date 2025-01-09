@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { Prisma } from "@prisma/client";
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { EventStatus } from "@prisma/client";
 import {
   IsString,
   MinLength,
@@ -7,68 +7,61 @@ import {
   Min,
   IsOptional,
   IsDateString,
-  MinDate,
+  IsEnum,
 } from "class-validator";
 
 export class UpdateEventDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
   @MinLength(5)
   @IsOptional()
   title?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
   @MinLength(5)
   @IsOptional()
   description?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
   @MinLength(5)
   @IsOptional()
   location?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsNumber()
   @Min(0)
   @IsOptional()
   capacity?: number;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsOptional()
   @IsDateString()
   @IsOptional()
   openRegisterAt?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsDateString()
-  @MinDate(new Date())
   @IsOptional()
   closeRegisterAt?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsDateString()
-  @MinDate(new Date())
   @IsOptional()
   startAt?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsDateString()
-  @MinDate(new Date())
   @IsOptional()
   endAt?: string;
 
-  toEventInput() {
-    return {
-      title: this.title,
-      description: this.description,
-      location: this.location,
-      capacity: this.capacity,
-      openRegisterAt: this.openRegisterAt,
-      closeRegisterAt: this.closeRegisterAt,
-      startAt: this.startAt,
-      endAt: this.endAt,
-    } as Prisma.EventUpdateInput;
-  }
+  @ApiPropertyOptional()
+  @IsOptional()
+  needApproval?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEnum(EventStatus)
+  status?: EventStatus;
 }

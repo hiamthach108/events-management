@@ -9,7 +9,10 @@ run:
 migration:
 	npx prisma migrate dev --name $(name)
 
+apply-migration:
+	npx prisma migrate deploy
+
 db-pull:
 	npx prisma db pull
 
-.PHONY: build run migrate release
+.PHONY: build run migration apply-migration db-pull

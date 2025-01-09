@@ -1,13 +1,11 @@
 import { IsDateAfter } from "@/shared/decorators/date-after.decorator";
 import { ApiProperty } from "@nestjs/swagger";
-import { Prisma } from "@prisma/client";
 import {
   IsOptional,
   IsDateString,
   IsString,
   IsNumber,
   Min,
-  MinDate,
   MinLength,
 } from "class-validator";
 
@@ -32,40 +30,35 @@ export class CreateEventDto {
   @Min(0)
   capacity: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "2021-09-01T00:00:00.000Z",
+  })
   @IsOptional()
   @IsDateString()
   openRegisterAt: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "2021-09-02T00:00:00.000Z",
+  })
   @IsDateString()
-  @MinDate(new Date())
   @IsDateAfter("openRegisterAt", {
     message: "Close date must be after open date",
   })
   closeRegisterAt: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "2021-09-01T00:00:00.000Z",
+  })
   @IsDateString()
-  @MinDate(new Date())
   startAt: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "2021-09-02T00:00:00.000Z",
+  })
   @IsDateString()
-  @MinDate(new Date())
   @IsDateAfter("startAt", { message: "End date must be after start date" })
   endAt: string;
 
-  toEventInput() {
-    return {
-      title: this.title,
-      description: this.description,
-      location: this.location,
-      capacity: this.capacity,
-      openRegisterAt: this.openRegisterAt,
-      closeRegisterAt: this.closeRegisterAt,
-      startAt: this.startAt,
-      endAt: this.endAt,
-    } as Prisma.EventCreateInput;
-  }
+  @ApiProperty()
+  needApproval: boolean;
 }

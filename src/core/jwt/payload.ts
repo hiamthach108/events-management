@@ -1,5 +1,5 @@
 export type Payload = {
-  sub: string;
+  iss: string;
   iat: number;
   exp: number;
   sessionId: string;

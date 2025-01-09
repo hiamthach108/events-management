@@ -41,19 +41,16 @@ export class EventRepository {
       AND.push({ createdBy: { contains: params.organizer } });
     }
 
-    const conditions = {
-      OR,
+    const where: Prisma.EventWhereInput = {
       AND,
+      ...(OR.length > 0 && { OR }),
     };
 
-    const total = await this.dbCtx.event.count({
-      where: conditions,
-    });
-
+    const total = await this.dbCtx.event.count({ where });
     const data = await this.dbCtx.event.findMany({
-      where: conditions,
-      take: params.take,
-      skip: params.skip,
+      where,
+      take: Number(params.take),
+      skip: Number(params.skip),
     });
 
     return { total, data };

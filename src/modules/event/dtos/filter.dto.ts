@@ -1,42 +1,54 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsNumber, IsDateString, IsString } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsOptional, IsDateString, IsString } from "class-validator";
 
 export class EventSearchFilter {
-  @ApiProperty()
-  @IsNumber()
+  @ApiProperty({
+    description: "Number of items to return",
+    example: 10,
+  })
   take: number;
 
-  @ApiProperty()
-  @IsNumber()
+  @ApiProperty({
+    description: "Number of items to skip",
+    example: 0,
+  })
   skip: number;
 
-  @ApiProperty()
-  @IsOptional()
+  @ApiPropertyOptional({
+    description: "Search by event name",
+  })
   @IsString()
+  @IsOptional()
   search?: string;
 
-  @ApiProperty()
-  @IsOptional()
+  @ApiPropertyOptional({
+    description: "Start date of event",
+    example: "2021-01-01T00:00:00.000Z",
+  })
   @IsDateString()
+  @IsOptional()
   startDate?: Date;
 
-  @ApiProperty()
-  @IsOptional()
+  @ApiPropertyOptional({
+    description: "End date of event",
+    example: "2021-01-01T00:00:00.000Z",
+  })
   @IsDateString()
+  @IsOptional()
   endDate?: Date;
 
-  @ApiProperty()
-  @IsOptional()
+  @ApiPropertyOptional()
   @IsString()
+  @IsOptional()
   location?: string;
 
-  @ApiProperty()
-  @IsOptional()
+  @ApiPropertyOptional()
   @IsString()
+  @IsOptional()
   category?: string;
 
-  @ApiProperty()
-  @IsOptional()
+  @ApiPropertyOptional()
   @IsString()
+  @IsOptional()
   organizer?: string;
 }

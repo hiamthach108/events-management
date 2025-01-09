@@ -49,7 +49,7 @@ export class UserService {
       return ApiResp.Unauthorized();
     }
 
-    const user = await this._userRepo.findUserById({ id: payload.sub });
+    const user = await this._userRepo.findUserById({ id: payload.iss });
 
     return ApiResp.Ok({
       user,

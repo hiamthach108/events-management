@@ -8,14 +8,10 @@ import { JWT_SECRET } from "@/shared/constants/env.const";
 export class JwtService {
   constructor(private readonly jwt: NestJwt) {}
 
-  async generateAccessToken(
-    userId: string,
-    session: string,
-    exp: number,
-  ) {
+  async generateAccessToken(userId: string, session: string, exp: number) {
     // implementation
     const payload: Payload = {
-      sub: userId,
+      iss: userId,
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + exp,
       sessionId: session,
