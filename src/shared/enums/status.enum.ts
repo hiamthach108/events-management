@@ -1,7 +1,13 @@
-export enum DataStatus {
-  DRAFT = "DRAFT",
+export enum AttendeeStatus {
   PENDING = "PENDING",
-  PUBLISHED = "PUBLISHED",
-  REJECTED = "REJECTED",
-  DELETED = "DELETED",
+  CONFIRMED = "CONFIRMED",
+  WAITLIST = "WAITLIST",
+  CANCELLED = "CANCELLED",
+}
+
+export enum EventStatus {
+  ACTIVE = "ACTIVE",
+  SUSPENDED = "SUSPENDED",
+  CANCELLED = "CANCELLED",
+  COMPLETED = "COMPLETED",
 }
