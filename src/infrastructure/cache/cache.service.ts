@@ -31,10 +31,12 @@ export class CacheService {
   }
 
   async set(key: string, value: any, ttl?: number) {
+    const TTL = ttl || 60 * 60 * 24; // 1 day
+
     const k = `${APP_NAME}:${key}`;
 
     return this.cacheManager.set(k, value, {
-      ttl,
+      ttl: TTL,
     });
   }
 

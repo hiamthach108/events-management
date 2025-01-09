@@ -1,7 +1,6 @@
 import { CacheService } from "@/infrastructure/cache/cache.service";
 import { EventRepository } from "@/infrastructure/repository/event.repository";
 import { Inject, Injectable } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
 import { EventSearchFilter } from "./dtos/filter.dto";
 import { CreateEventDto } from "./dtos/create.dto";
 import { UpdateEventDto } from "./dtos/update.dto";
@@ -10,14 +9,13 @@ import { get } from "lodash";
 import { REQUEST } from "@nestjs/core";
 import ApiResp from "@/shared/helpers/api.helper";
 import { LoggerService } from "@/core/log/log.service";
-import { EventStatus } from "@prisma/client";
+import { Event, EventStatus } from "@prisma/client";
 
 @Injectable()
 export class EventService {
   constructor(
     @Inject(REQUEST) private readonly httpReq: Request,
     private readonly _logger: LoggerService,
-    private readonly _jwt: JwtService,
     private readonly _cache: CacheService,
     private readonly _eventRepo: EventRepository,
   ) {}
@@ -36,9 +34,7 @@ export class EventService {
 
   async handleGetEventDetail(id: string) {
     this._logger.log("[GetEventDetail]");
-    const result = await this._eventRepo.findEventById({
-      id,
-    });
+    const result = await this.getEventDetail(id);
 
     if (!result) {
       return ApiResp.NotFound("Event not found");
@@ -67,6 +63,8 @@ export class EventService {
         },
       },
     });
+
+    this.updateEventCache(result);
 
     return ApiResp.Ok({
       data: result,
@@ -98,8 +96,38 @@ export class EventService {
       },
     );
 
+    this.updateEventCache(result);
+
     return ApiResp.Ok({
       data: result,
     });
+  }
+
+  async getEventDetail(id: string): Promise<Event | null> {
+    // get from cache
+    const cacheKey = `events:${id}`;
+    const cache = await this._cache.get(cacheKey);
+    if (cache) {
+      return cache as Event;
+    }
+
+    // get from database
+    const result = await this._eventRepo.findEventById({
+      id,
+    });
+
+    if (!result) {
+      return null;
+    }
+
+    // set cache
+    await this._cache.set(cacheKey, result);
+
+    return result;
+  }
+
+  async updateEventCache(data: Event) {
+    const cacheKey = `events:${data.id}`;
+    await this._cache.set(cacheKey, data);
   }
 }
