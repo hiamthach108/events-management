@@ -9,7 +9,9 @@ import { get } from "lodash";
 import { REQUEST } from "@nestjs/core";
 import ApiResp from "@/shared/helpers/api.helper";
 import { LoggerService } from "@/core/log/log.service";
-import { Event, EventStatus } from "@prisma/client";
+import { AttendeeStatus, Event, EventStatus } from "@prisma/client";
+import { UserRoles } from "@/shared/enums/user.enum";
+import { GetEventAttendeesDto, UpdateAttendeeDto } from "./dtos/attendee.dto";
 
 @Injectable()
 export class EventService {
@@ -97,6 +99,132 @@ export class EventService {
     );
 
     this.updateEventCache(result);
+
+    return ApiResp.Ok({
+      data: result,
+    });
+  }
+
+  async handleUserRegisterEvent(eventId: string) {
+    this._logger.log("[UserRegisterEvent]");
+    const payload = get(this.httpReq, "user") as Payload;
+
+    if (!payload) {
+      this._logger.error("[UserRegisterEvent] Payload is empty");
+      return ApiResp.Unauthorized("Unauthorized");
+    }
+
+    const event = await this.getEventDetail(eventId);
+    if (!event) {
+      return ApiResp.NotFound("Event not found");
+    }
+
+    const result = await this._eventRepo.addUserToEvent(
+      eventId,
+      payload.iss,
+      event.needApproval ? AttendeeStatus.PENDING : AttendeeStatus.CONFIRMED,
+      UserRoles.USER,
+    );
+
+    return ApiResp.Ok({
+      data: result,
+    });
+  }
+
+  async handleUserUnregisterEvent(eventId: string) {
+    this._logger.log("[UserUnregisterEvent]");
+    const payload = get(this.httpReq, "user") as Payload;
+
+    if (!payload) {
+      this._logger.error("[UserUnregisterEvent] Payload is empty");
+      return ApiResp.Unauthorized("Unauthorized");
+    }
+
+    const event = await this.getEventDetail(eventId);
+    if (!event) {
+      return ApiResp.NotFound("Event not found");
+    }
+
+    const result = await this._eventRepo.removeUserFromEvent(
+      eventId,
+      payload.iss,
+    );
+
+    return ApiResp.Ok({
+      data: result,
+    });
+  }
+
+  async handleAddUserToEvent(eventId: string, userId: string, role: UserRoles) {
+    this._logger.log("[AddUserToEvent]");
+    const payload = get(this.httpReq, "user") as Payload;
+
+    if (!payload) {
+      this._logger.error("[AddUserToEvent] Payload is empty");
+      return ApiResp.Unauthorized("Unauthorized");
+    }
+
+    const event = await this.getEventDetail(eventId);
+    if (!event) {
+      return ApiResp.NotFound("Event not found");
+    }
+
+    if (event.createdBy !== payload.iss) {
+      return ApiResp.Forbidden("Forbidden");
+    }
+
+    const result = await this._eventRepo.addUserToEvent(
+      eventId,
+      userId,
+      AttendeeStatus.CONFIRMED,
+      role,
+    );
+
+    return ApiResp.Ok({
+      data: result,
+    });
+  }
+
+  async handleGetEventAttendees(params: GetEventAttendeesDto) {
+    this._logger.log("[GetEventAttendees]");
+    const event = await this.getEventDetail(params.eventId);
+    if (!event) {
+      return ApiResp.NotFound("Event not found");
+    }
+
+    const { total, data } = await this._eventRepo.getEventAttendees(params);
+
+    return ApiResp.Ok({
+      total,
+      take: params.take,
+      skip: params.skip,
+      data,
+    });
+  }
+
+  async handleUpdateAttendee(body: UpdateAttendeeDto) {
+    this._logger.log("[UpdateAttendee]");
+    const payload = get(this.httpReq, "user") as Payload;
+
+    if (!payload) {
+      this._logger.error("[UpdateAttendee] Payload is empty");
+      return ApiResp.Unauthorized("Unauthorized");
+    }
+
+    const event = await this.getEventDetail(body.eventId);
+    if (!event) {
+      return ApiResp.NotFound("Event not found");
+    }
+
+    if (event.createdBy !== payload.iss) {
+      return ApiResp.Forbidden("Forbidden");
+    }
+
+    const result = await this._eventRepo.updateAttendeeStatus(
+      body.eventId,
+      body.userId,
+      body.status,
+    );
 
     return ApiResp.Ok({
       data: result,

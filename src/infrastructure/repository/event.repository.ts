@@ -1,7 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import { EventStatus, Prisma } from "@prisma/client";
+import { AttendeeStatus, EventStatus, Prisma } from "@prisma/client";
 import { DbService } from "../database/db.service";
 import { EventSearchFilter } from "@/modules/event/dtos/filter.dto";
+import { UserRoles } from "@/shared/enums/user.enum";
+import { GetEventAttendeesDto } from "@/modules/event/dtos/attendee.dto";
 
 @Injectable()
 export class EventRepository {
@@ -73,5 +75,78 @@ export class EventRepository {
     data: Prisma.EventUpdateInput,
   ) {
     return this.dbCtx.event.update({ where: id, data });
+  }
+
+  async addUserToEvent(
+    eventId: string,
+    userId: string,
+    status: AttendeeStatus,
+    role: UserRoles,
+  ) {
+    return this.dbCtx.eventAttendee.create({
+      data: {
+        event: { connect: { id: eventId } },
+        user: { connect: { id: userId } },
+        role,
+        status: status,
+      },
+    });
+  }
+
+  async removeUserFromEvent(eventId: string, userId: string) {
+    return this.dbCtx.eventAttendee.delete({
+      where: {
+        userId_eventId: {
+          eventId,
+          userId,
+        },
+      },
+    });
+  }
+
+  async getEventAttendees(query: GetEventAttendeesDto) {
+    const where: Prisma.EventAttendeeWhereInput = {
+      eventId: query.eventId,
+    };
+
+    if (query.role) {
+      where.role = query.role;
+    }
+
+    if (query.status) {
+      where.status = query.status;
+    }
+
+    const total = await this.dbCtx.eventAttendee.count({ where });
+    const data = await this.dbCtx.eventAttendee.findMany({
+      where,
+      take: Number(query.take),
+      skip: Number(query.skip),
+    });
+
+    return { total, data };
+  }
+
+  async countEventAttendees(eventId: string) {
+    return this.dbCtx.eventAttendee.count({
+      where: { eventId, status: AttendeeStatus.CONFIRMED },
+    });
+  }
+
+  async getEventAttendeeStatus(eventId: string, userId: string) {
+    return this.dbCtx.eventAttendee.findUnique({
+      where: { userId_eventId: { eventId, userId } },
+    });
+  }
+
+  async updateAttendeeStatus(
+    eventId: string,
+    userId: string,
+    status: AttendeeStatus,
+  ) {
+    return this.dbCtx.eventAttendee.update({
+      where: { userId_eventId: { eventId, userId } },
+      data: { status },
+    });
   }
 }
