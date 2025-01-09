@@ -7,10 +7,11 @@ CREATE TYPE "AttendeeStatus" AS ENUM ('PENDING', 'CONFIRMED', 'WAITLIST', 'CANCE
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
-    "fullName" TEXT NOT NULL,
+    "fullName" VARCHAR(255) NOT NULL,
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
-    "avatar" TEXT NOT NULL,
+    "avatar" TEXT,
+    "phone" VARCHAR(15),
     "isActive" BOOLEAN NOT NULL,
     "lastAccess" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -22,17 +23,17 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "Event" (
     "id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
+    "title" VARCHAR(255) NOT NULL,
     "description" TEXT NOT NULL,
-    "location" TEXT NOT NULL,
-    "capacity" INTEGER NOT NULL,
+    "location" VARCHAR(500) NOT NULL,
+    "capacity" INTEGER NOT NULL DEFAULT 0,
     "needApproval" BOOLEAN NOT NULL,
     "status" "EventStatus" NOT NULL,
-    "thumbnail" TEXT NOT NULL,
+    "thumbnail" TEXT,
     "metadata" TEXT,
-    "openRegisterAt" TIMESTAMP(3) NOT NULL,
+    "openRegisterAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "closeRegisterAt" TIMESTAMP(3) NOT NULL,
-    "startAt" TIMESTAMP(3) NOT NULL,
+    "startAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "endAt" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -73,7 +74,37 @@ CREATE TABLE "EventCategory" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE INDEX "User_email_idx" ON "User"("email");
+
+-- CreateIndex
+CREATE INDEX "Event_title_idx" ON "Event"("title");
+
+-- CreateIndex
+CREATE INDEX "Event_status_startAt_idx" ON "Event"("status", "startAt");
+
+-- CreateIndex
+CREATE INDEX "Event_startAt_endAt_idx" ON "Event"("startAt", "endAt");
+
+-- CreateIndex
+CREATE INDEX "Event_status_closeRegisterAt_idx" ON "Event"("status", "closeRegisterAt");
+
+-- CreateIndex
+CREATE INDEX "EventAttendee_eventId_idx" ON "EventAttendee"("eventId");
+
+-- CreateIndex
+CREATE INDEX "EventAttendee_eventId_status_idx" ON "EventAttendee"("eventId", "status");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "EventAttendee_userId_eventId_key" ON "EventAttendee"("userId", "eventId");
+
+-- CreateIndex
+CREATE INDEX "Category_name_idx" ON "Category"("name");
+
+-- CreateIndex
+CREATE INDEX "EventCategory_eventId_idx" ON "EventCategory"("eventId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "EventCategory_eventId_categoryId_key" ON "EventCategory"("eventId", "categoryId");

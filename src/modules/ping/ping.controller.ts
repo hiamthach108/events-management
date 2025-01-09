@@ -6,9 +6,7 @@ import { ApiTags } from "@nestjs/swagger";
 @ApiTags("HealthCheck")
 @Controller("ping")
 export class PingController {
-  constructor(private readonly cache: CacheService) {
-    console.log("PingController created");
-  }
+  constructor(private readonly cache: CacheService) {}
 
   @Get()
   async ping() {

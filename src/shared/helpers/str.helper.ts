@@ -1,3 +1,5 @@
+import * as bcrypt from "bcrypt";
+
 export const randomString = (length: number) => {
   let result = "";
   const characters =
@@ -27,4 +29,12 @@ export const isValidJson = (jsonString: string): boolean => {
   } catch (e: any) {
     return false;
   }
+};
+
+export const hashPassword = async (password: string): Promise<string> => {
+  return await bcrypt.hash(password, 10);
+};
+
+export const comparePassword = async (hashed: string, password: string) => {
+  return await bcrypt.compare(password, hashed);
 };

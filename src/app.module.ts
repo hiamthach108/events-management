@@ -7,12 +7,7 @@ import { GoogleStrategy } from "./core/oauth/google.strategy";
 import { LoggerModule } from "./core/log/log.service";
 
 @Module({
-  imports: [
-    ...modules,
-    JwtModule,
-    CacheModule,
-    LoggerModule,
-  ],
+  imports: [...modules, JwtModule, CacheModule, LoggerModule],
   providers: [GoogleStrategy],
 })
 export class AppModule {}

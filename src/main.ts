@@ -20,8 +20,8 @@ async function bootstrap() {
 
   // Swagger
   const config = new DocumentBuilder()
-    .setTitle("API VN History Chatbot")
-    .setDescription("API VN History Chatbot")
+    .setTitle("Events Management System")
+    .setDescription("Events Management System")
     .setVersion(APP_VERSION)
     .addBearerAuth()
     .build();
