@@ -3,7 +3,7 @@ import { LoggerService } from "@/core/log/log.service";
 import { CacheService } from "@/infrastructure/cache/cache.service";
 import { UserRepository } from "@/infrastructure/repository/user.repository";
 import {
-  GOOGLE_LOGIN_URL,
+  GOOGLE_CALLBACK_URL,
   JWT_ACCESS_TOKEN_EXPIRED_MIN,
   JWT_REFRESH_TOKEN_EXPIRED_MIN,
 } from "@/shared/constants/env.const";
@@ -50,7 +50,7 @@ export class AuthService {
 
     const localToken = await this._jwt.generateLocalToken();
 
-    const url = `${GOOGLE_LOGIN_URL}?token=${localToken}`;
+    const url = `${GOOGLE_CALLBACK_URL}?token=${localToken}`;
 
     if (body.redirect) {
       this._cache.set(
