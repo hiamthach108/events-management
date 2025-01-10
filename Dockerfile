@@ -1,6 +1,9 @@
 # Use the official Node.js image as the base image
 FROM node:20-alpine
 
+# Install OpenSSL and other dependencies
+RUN apk add --no-cache openssl postgresql-client
+
 # Set the working directory inside the container
 WORKDIR /usr/src/app
 

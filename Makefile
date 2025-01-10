@@ -15,4 +15,7 @@ apply-migration:
 db-pull:
 	npx prisma db pull
 
-.PHONY: build run migration apply-migration db-pull
+run-app:
+	docker-compose up	 --build -d
+
+.PHONY: build run migration apply-migration db-pull run-app
