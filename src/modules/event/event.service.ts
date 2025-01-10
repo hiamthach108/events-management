@@ -119,12 +119,51 @@ export class EventService {
       return ApiResp.NotFound("Event not found");
     }
 
+    // check if event is still open for registration
+    if (event.status !== EventStatus.ACTIVE) {
+      return ApiResp.BadRequest("Event is not active");
+    }
+
+    if (event.closeRegisterAt && new Date() > event.closeRegisterAt) {
+      return ApiResp.BadRequest("Event registration is closed");
+    }
+
+    // check if capacity is full
+    const attendeeCount = await this.getEventAttendeeCount(eventId);
+    if (event.capacity && attendeeCount >= event.capacity) {
+      return ApiResp.BadRequest("Event is full");
+    }
+
+    // check if user is already registered
+    const attendee = await this._eventRepo.getEventAttendeeStatus(
+      eventId,
+      payload.iss,
+    );
+
+    if (attendee && attendee.status === AttendeeStatus.CONFIRMED) {
+      return ApiResp.BadRequest("User already registered to event");
+    }
+
+    if (attendee) {
+      const result = await this._eventRepo.updateAttendeeStatus(
+        eventId,
+        payload.iss,
+        event.needApproval ? AttendeeStatus.PENDING : AttendeeStatus.CONFIRMED,
+      );
+
+      return ApiResp.Ok({
+        data: result,
+      });
+    }
+
     const result = await this._eventRepo.addUserToEvent(
       eventId,
       payload.iss,
       event.needApproval ? AttendeeStatus.PENDING : AttendeeStatus.CONFIRMED,
       UserRoles.USER,
     );
+
+    await this.updateCacheEventAttendeeCount(eventId, attendeeCount + 1);
 
     return ApiResp.Ok({
       data: result,
@@ -145,10 +184,24 @@ export class EventService {
       return ApiResp.NotFound("Event not found");
     }
 
+    // check if user is already registered
+    const attendee = await this._eventRepo.getEventAttendeeStatus(
+      eventId,
+      payload.iss,
+    );
+
+    if (!attendee) {
+      return ApiResp.NotFound("User not registered to event");
+    }
+
+    const attendCount = await this.getEventAttendeeCount(eventId);
+
     const result = await this._eventRepo.removeUserFromEvent(
       eventId,
       payload.iss,
     );
+
+    await this.updateCacheEventAttendeeCount(eventId, attendCount - 1);
 
     return ApiResp.Ok({
       data: result,
@@ -171,6 +224,16 @@ export class EventService {
 
     if (event.createdBy !== payload.iss) {
       return ApiResp.Forbidden("Forbidden");
+    }
+
+    // check if user is already registered
+    const attendee = await this._eventRepo.getEventAttendeeStatus(
+      eventId,
+      userId,
+    );
+
+    if (attendee) {
+      return ApiResp.BadRequest("User already registered to event");
     }
 
     const result = await this._eventRepo.addUserToEvent(
@@ -231,6 +294,40 @@ export class EventService {
     });
   }
 
+  async handleUserCheckInEvent(eventId: string) {
+    this._logger.log("[UserCheckinEvent]");
+    const payload = get(this.httpReq, "user") as Payload;
+
+    if (!payload) {
+      this._logger.error("[UserCheckinEvent] Payload is empty");
+      return ApiResp.Unauthorized("Unauthorized");
+    }
+
+    const event = await this.getEventDetail(eventId);
+    if (!event) {
+      return ApiResp.NotFound("Event not found");
+    }
+
+    const attendee = await this._eventRepo.getEventAttendeeStatus(
+      eventId,
+      payload.iss,
+    );
+
+    if (!attendee) {
+      return ApiResp.NotFound("User not registered to event");
+    }
+
+    if (attendee.status !== AttendeeStatus.CONFIRMED) {
+      return ApiResp.BadRequest("User not confirmed to event");
+    }
+
+    const result = await this._eventRepo.updateCheckIn(eventId, payload.iss);
+
+    return ApiResp.Ok({
+      data: result,
+    });
+  }
+
   async getEventDetail(id: string): Promise<Event | null> {
     // get from cache
     const cacheKey = `events:${id}`;
@@ -257,5 +354,23 @@ export class EventService {
   async updateEventCache(data: Event) {
     const cacheKey = `events:${data.id}`;
     await this._cache.set(cacheKey, data);
+  }
+
+  async getEventAttendeeCount(eventId: string): Promise<number> {
+    const cacheKey = `events:${eventId}:attendees:count`;
+    const cache = await this._cache.get(cacheKey);
+    if (cache) {
+      return cache as number;
+    }
+
+    const count = await this._eventRepo.countEventAttendees(eventId);
+    await this._cache.set(cacheKey, count);
+
+    return count;
+  }
+
+  async updateCacheEventAttendeeCount(eventId: string, count: number) {
+    const cacheKey = `events:${eventId}:attendees:count`;
+    await this._cache.set(cacheKey, count);
   }
 }

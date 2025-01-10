@@ -14,7 +14,6 @@ export class UserUnregisterDto {
 }
 
 export class AddAttendeeDto {
-  @ApiProperty()
   eventId: string;
 
   @ApiProperty()
@@ -22,11 +21,10 @@ export class AddAttendeeDto {
 
   @ApiProperty()
   @IsEnum(UserRoles)
-  role: string;
+  role: UserRoles;
 }
 
 export class GetEventAttendeesDto {
-  @ApiProperty()
   eventId: string;
 
   @ApiProperty()
@@ -47,7 +45,6 @@ export class GetEventAttendeesDto {
 }
 
 export class UpdateAttendeeDto {
-  @ApiProperty()
   eventId: string;
 
   @ApiProperty()

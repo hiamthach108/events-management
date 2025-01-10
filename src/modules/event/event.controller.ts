@@ -14,7 +14,12 @@ import { EventService } from "./event.service";
 import { CreateEventDto } from "./dtos/create.dto";
 import { UpdateEventDto } from "./dtos/update.dto";
 import { ProtectedGuard } from "@/shared/middlewares/protected.guard";
-import { GetEventAttendeesDto, UpdateAttendeeDto } from "./dtos/attendee.dto";
+import {
+  AddAttendeeDto,
+  GetEventAttendeesDto,
+  UpdateAttendeeDto,
+} from "./dtos/attendee.dto";
+import ApiResp from "@/shared/helpers/api.helper";
 
 @ApiTags("Events")
 @Controller("api/v1/events")
@@ -61,15 +66,60 @@ export class EventController {
 
   @ApiBearerAuth()
   @UseGuards(ProtectedGuard)
-  @Post("attendees")
-  async addAttendee(@Body() body: GetEventAttendeesDto) {
-    return await this._service.handleGetEventAttendees(body);
+  @Get("/:eventId/attendees")
+  async getAttendees(
+    @Param("eventId") eventId: string,
+    @Query() query: GetEventAttendeesDto,
+  ) {
+    return await this._service.handleGetEventAttendees({
+      ...query,
+      eventId,
+    });
   }
 
   @ApiBearerAuth()
   @UseGuards(ProtectedGuard)
-  @Put("attendees")
-  async updateAttendee(@Body() body: UpdateAttendeeDto) {
-    return await this._service.handleUpdateAttendee(body);
+  @Put("/:eventId/attendees")
+  async updateAttendee(
+    @Param("eventId") eventId: string,
+    @Body() body: UpdateAttendeeDto,
+  ) {
+    if (!eventId) {
+      return ApiResp.BadRequest("Event ID is required");
+    }
+
+    return await this._service.handleUpdateAttendee({
+      ...body,
+      eventId,
+    });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(ProtectedGuard)
+  @Post("/:eventId/attendees")
+  async addAttendee(
+    @Param("eventId") eventId: string,
+    @Body() body: AddAttendeeDto,
+  ) {
+    if (!eventId) {
+      return ApiResp.BadRequest("Event ID is required");
+    }
+
+    return await this._service.handleAddUserToEvent(
+      eventId,
+      body.userId,
+      body.role,
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(ProtectedGuard)
+  @Post("/:eventId/check-in")
+  async checkIn(@Param("eventId") eventId: string) {
+    if (!eventId) {
+      return ApiResp.BadRequest("Event ID is required");
+    }
+
+    return await this._service.handleUserCheckInEvent(eventId);
   }
 }

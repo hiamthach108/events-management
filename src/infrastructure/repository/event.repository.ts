@@ -94,13 +94,10 @@ export class EventRepository {
   }
 
   async removeUserFromEvent(eventId: string, userId: string) {
-    return this.dbCtx.eventAttendee.delete({
-      where: {
-        userId_eventId: {
-          eventId,
-          userId,
-        },
-      },
+    // update status to CANCELLED
+    return this.dbCtx.eventAttendee.update({
+      where: { userId_eventId: { eventId, userId } },
+      data: { status: AttendeeStatus.CANCELLED },
     });
   }
 
@@ -147,6 +144,13 @@ export class EventRepository {
     return this.dbCtx.eventAttendee.update({
       where: { userId_eventId: { eventId, userId } },
       data: { status },
+    });
+  }
+
+  async updateCheckIn(eventId: string, userId: string) {
+    return this.dbCtx.eventAttendee.update({
+      where: { userId_eventId: { eventId, userId } },
+      data: { checkInAt: new Date() },
     });
   }
 }
